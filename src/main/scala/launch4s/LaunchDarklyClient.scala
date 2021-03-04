@@ -1,4 +1,4 @@
-package example
+package launch4s
 
 import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Effect, IO, Resource, Sync}
 import com.launchdarkly.sdk.{LDUser, LDValue}

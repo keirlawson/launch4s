@@ -1,4 +1,4 @@
-package example
+package launch4s
 
 import cats.Functor
 import com.launchdarkly.sdk.EvaluationDetail
