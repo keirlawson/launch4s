@@ -1,14 +1,5 @@
 package example
 
-// decide package name
-// Natchez module
-// Publish for 2.12, 2.13
-// scaladoc
-// support getDataSourceStatusProvider(), getDataStoreStatusProvider()
-// Circe JSON stuff to make LDValue s? - http://launchdarkly.github.io/java-server-sdk/com/launchdarkly/sdk/json/package-summary.html
-//Client should be newed with a blocker, same with close of resource
-//care about covering https://docs.launchdarkly.com/sdk/server-side/java#variation variation -> identify
-
 import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Effect, IO, Resource, Sync}
 import com.launchdarkly.sdk.{LDUser, LDValue}
 import com.launchdarkly.sdk.server.{LDClient, LDConfig}
@@ -21,13 +12,22 @@ import com.launchdarkly.sdk.server.FeatureFlagsState
 import com.launchdarkly.sdk.server.FlagsStateOption
 import com.launchdarkly.sdk.server.interfaces.DataSource
 import com.launchdarkly.sdk.server.interfaces.DataSourceStatusProvider
+import com.launchdarkly.sdk.EvaluationDetail
+import cats.Functor
+import cats.Eval
+import Instances._
 
 trait LaunchDarklyClient[F[_]] {
   def boolVariation(featureKey: String, user: LDUser, defaultValue: Boolean): F[Boolean]
+  def boolVariationDetail(featureKey: String, user: LDUser, defaultValue: Boolean): F[EvaluationDetail[Boolean]]
   def intVariation(featureKey: String, user: LDUser, defaultValue: Int): F[Int]
+  def intVariationDetail(featureKey: String, user: LDUser, defaultValue: Int): F[EvaluationDetail[Int]]
   def doubleVariation(featureKey: String, user: LDUser, defaultValue: Double): F[Double]
+  def doubleVariationDetail(featureKey: String, user: LDUser, defaultValue: Double): F[EvaluationDetail[Double]]
   def jsonValueVariation(featureKey: String, user: LDUser, defaultValue: LDValue): F[LDValue]
+  def jsonValueVariationDetail(featureKey: String, user: LDUser, defaultValue: LDValue): F[EvaluationDetail[LDValue]]
   def stringVariation(featureKey: String, user: LDUser, defaultValue: String): F[String]
+  def stringVariationDetail(featureKey: String, user: LDUser, defaultValue: String): F[EvaluationDetail[String]]
 
   def identify(user: LDUser): F[Unit]
 
@@ -52,10 +52,19 @@ object LaunchDarklyClient {
 
   def make[F[_] : ConcurrentEffect : ContextShift](blocker: Blocker, javaClient: LDClient): LaunchDarklyClient[F] = new LaunchDarklyClient[F] {
     def boolVariation(featureKey: String, user: LDUser, defaultValue: Boolean): F[Boolean] = blocker.delay(javaClient.boolVariation(featureKey, user, defaultValue))
+    def boolVariationDetail(featureKey: String, user: LDUser, defaultValue: Boolean): F[EvaluationDetail[Boolean]] = blocker.delay(javaClient.boolVariationDetail(featureKey, user, defaultValue).map(_.booleanValue()))
+    
     def intVariation(featureKey: String, user: LDUser, defaultValue: Int): F[Int] = blocker.delay(javaClient.intVariation(featureKey, user, defaultValue))
+    def intVariationDetail(featureKey: String, user: LDUser, defaultValue: Int): F[EvaluationDetail[Int]] = blocker.delay(javaClient.intVariationDetail(featureKey, user, defaultValue).map(_.intValue()))
+    
     def doubleVariation(featureKey: String, user: LDUser, defaultValue: Double): F[Double] = blocker.delay(javaClient.doubleVariation(featureKey, user, defaultValue))
+    def doubleVariationDetail(featureKey: String, user: LDUser, defaultValue: Double): F[EvaluationDetail[Double]] = blocker.delay(javaClient.doubleVariationDetail(featureKey, user, defaultValue).map(_.doubleValue()))
+    
     def jsonValueVariation(featureKey: String, user: LDUser, defaultValue: LDValue): F[LDValue] = blocker.delay(javaClient.jsonValueVariation(featureKey, user, defaultValue))
+    def jsonValueVariationDetail(featureKey: String, user: LDUser, defaultValue: LDValue): F[EvaluationDetail[LDValue]] = blocker.delay(javaClient.jsonValueVariationDetail(featureKey, user, defaultValue))
+    
     def stringVariation(featureKey: String, user: LDUser, defaultValue: String): F[String] = blocker.delay(javaClient.stringVariation(featureKey, user, defaultValue))
+    def stringVariationDetail(featureKey: String, user: LDUser, defaultValue: String): F[EvaluationDetail[String]] = blocker.delay(javaClient.stringVariationDetail(featureKey, user, defaultValue))
     
 
     def identify(user: LDUser): F[Unit] = blocker.delay(javaClient.identify(user))
@@ -73,8 +82,6 @@ object LaunchDarklyClient {
     def allFlagsState(user: LDUser, options: FlagsStateOption*): F[FeatureFlagsState] = blocker.delay(javaClient.allFlagsState(user, options:_*))
 
     def secureModeHash(user: LDUser): F[String] = blocker.delay(javaClient.secureModeHash(user))
-
-    //*variationDetail
 
     def getDataSourceStatusProvider: F[DataSourceStatusProvider] = blocker.delay(javaClient.getDataSourceStatusProvider())
 
