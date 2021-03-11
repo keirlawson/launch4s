@@ -23,6 +23,8 @@ publishMavenStyle := true
 sonatypeProfileName := "io.github.keirlawson"
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
+licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+
 homepage := Some(url("https://github.com/keirlawson/launch4s"))
 scmInfo := Some(
   ScmInfo(
