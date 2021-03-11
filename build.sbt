@@ -20,7 +20,7 @@ lazy val root = (project in file("."))
 
 publishTo := sonatypePublishToBundle.value
 publishMavenStyle := true
-sonatypeProfileName := "com.github.keirlawson"
+sonatypeProfileName := "io.github.keirlawson"
 
 homepage := Some(url("https://github.com/keirlawson/launch4s"))
 scmInfo := Some(
